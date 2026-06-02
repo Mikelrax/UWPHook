@@ -32,8 +32,13 @@ namespace UWPHook
             try
             {
                 // Write with a UTF-8 BOM so PowerShell 5.1 parses the file as
-                // UTF-8 even when the host code page is not UTF-8.
-                File.WriteAllText(tempScript, scriptText + Environment.NewLine + "| Out-String", new UTF8Encoding(true));
+                // UTF-8 even when the host code page is not UTF-8. The trailing
+                // | Out-String must live on the same line as the script's last
+                // expression: a script that ends with ';' would otherwise leave
+                // an empty pipe element on the next line and PowerShell 5.1
+                // raises EmptyPipeElement.
+                string tail = scriptText.TrimEnd(';', ' ', '\t', '\r', '\n');
+                File.WriteAllText(tempScript, tail + " | Out-String", new UTF8Encoding(true));
 
                 var startInfo = new ProcessStartInfo
                 {
